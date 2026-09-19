@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="Trading-Journals" content="Update your trade to know outcomes.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Ascent Journal</title>
+<meta name="description" content="Log every trade once. Win rate, R:R, sessions and monthly P&L update on their own.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ---------- Design tokens: change colors and fonts here ---------- */
+  :root {
+    --paper: #F3F6F8;
+    --card: #FFFFFF;
+    --ink: #10222B;
+    --ink-soft: #4B606B;
+    --line: #D9E1E6;
+    --grid: rgba(16, 34, 43, 0.045);
+    --signal: #3B5BFF;
+
+    --gain: #0B7A55;
+    --gain-soft: #DDF3EA;
+    --gain-dark: #4BE0A5;
+    --loss: #C7324B;
+    --loss-soft: #FBE3E7;
+    --loss-dark: #FF8A9A;
+
+    --font-head: 'Familjen Grotesk', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+    --max: 1240px;
+
+    /* Header logo height: change this to make the logo bigger or smaller */
+    --logo-h: 68px;
+  }
+
+  /* ---------- Base ---------- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+  h1, h2 { font-family: var(--font-head); letter-spacing: -0.02em; line-height: 1.1; }
+  .wrap { width: min(100% - 2.5rem, var(--max)); margin-inline: auto; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .gain { color: var(--gain); }
+  .loss { color: var(--loss); }
+  .muted { color: var(--ink-soft); }
+
+  /* ---------- Buttons and inputs ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.62rem 1rem;
+    border: 1.5px solid transparent; border-radius: 12px;
+    font: 600 0.95rem var(--font-body);
+    text-decoration: none; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-primary { background: var(--ink); color: #fff; }
+  .btn-primary:hover { background: #1B3641; }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--ink); }
+  .btn-block { width: 100%; }
+  .link {
+    background: none; border: 0; padding: 0; font: inherit; font-weight: 600;
+    color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  .link.danger { color: var(--loss); }
+
+  .field label, .lbl { display: block; margin-bottom: 0.3rem; font-size: 0.88rem; font-weight: 600; }
+  .field input, .field select, .field textarea, .top select {
+    width: 100%; padding: 0.62rem 0.8rem;
+    border: 1.5px solid var(--line); border-radius: 12px;
+    background: #fff; color: var(--ink); font: inherit;
+  }
+  .field textarea { resize: vertical; min-height: 4.2rem; }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible,
+  .top select:focus-visible { outline-offset: 1px; border-color: var(--signal); }
+
+  /* ---------- Header ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(243, 246, 248, 0.86);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding-block: 0.5rem; }
+  .brand { display: inline-flex; align-items: center; text-decoration: none; }
+  .brand img { display: block; height: var(--logo-h); width: auto; }
+  .top-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+  .top select { width: auto; min-width: 9rem; }
+
+  .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; padding-block: 2rem 1.25rem; }
+  .page-head h1 { font-size: clamp(1.9rem, 3.6vw, 2.7rem); }
+  .page-head p { margin-top: 0.4rem; max-width: 34rem; color: var(--ink-soft); }
+  .years { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .year {
+    padding: 0.45rem 0.95rem; border: 1.5px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--ink); font: 600 0.95rem var(--font-body); cursor: pointer;
+  }
+  .year:hover { border-color: var(--ink); }
+  .year[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  /* ---------- Layout ---------- */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 1.5rem; align-items: start; padding-bottom: 3rem; }
+  .main, .aside { display: grid; gap: 1.25rem; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 1.4rem; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; margin-bottom: 1rem; }
+  .card-head h2 { font-size: 1.25rem; }
+
+  /* ---------- Hero: net P&L and equity curve ---------- */
+  .hero-card { background: var(--ink); color: #fff; border-radius: 28px; padding: clamp(1.4rem, 3vw, 2rem); overflow: hidden; }
+  .hero-label { color: rgba(255, 255, 255, 0.72); font-weight: 500; }
+  .hero-value { margin-top: 0.4rem; font: 700 clamp(2.4rem, 6vw, 4rem)/1 var(--font-head); letter-spacing: -0.03em; }
+  .hero-value.gain { color: var(--gain-dark); }
+  .hero-value.loss { color: var(--loss-dark); }
+  .hero-sub { margin-top: 0.55rem; color: rgba(255, 255, 255, 0.72); }
+  .curve { margin-top: 1.25rem; }
+  .curve svg { display: block; width: 100%; height: auto; }
+  .curve-empty { padding: 2.2rem 0 0.5rem; color: rgba(255, 255, 255, 0.6); }
+  .curve .zero { stroke: rgba(255, 255, 255, 0.28); stroke-width: 1; stroke-dasharray: 4 5; }
+  .curve .line { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .curve .line.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) forwards; }
+  .curve .dot { fill: currentColor; stroke: var(--ink); stroke-width: 3; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* ---------- Stat tiles ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 1.1rem 1.2rem; min-width: 0; }
+  .stat-label { font-size: 0.9rem; font-weight: 500; color: var(--ink-soft); }
+  .stat-value { margin-top: 0.35rem; font: 700 clamp(1.55rem, 2.2vw + 1rem, 2.1rem)/1.1 var(--font-head); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .stat-sub { margin-top: 0.3rem; font-size: 0.85rem; color: var(--ink-soft); }
+  .stat-rate { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .ring { width: 64px; height: 64px; flex: none; }
+  .ring-track { fill: none; stroke: var(--line); stroke-width: 8; }
+  .ring-fill { fill: none; stroke: var(--gain); stroke-width: 8; stroke-linecap: round; }
+
+  /* ---------- Monthly P&L ---------- */
+  .chart svg { display: block; width: 100%; height: auto; }
+  .zero-line { stroke: var(--line); stroke-width: 1.5; }
+  .bar-g { cursor: pointer; transition: opacity 0.2s; }
+  .bar-g.is-dim { opacity: 0.35; }
+  .bar-g.is-selected .bar { stroke: var(--ink); stroke-width: 2; }
+  .bar-gain { fill: var(--gain); }
+  .bar-loss { fill: var(--loss); }
+  .bar-flat, .bar-empty { fill: var(--line); }
+  .bar-val { font: 600 11px var(--font-body); fill: var(--ink-soft); }
+  .bar-mon { font: 500 12px var(--font-body); fill: var(--ink-soft); }
+
+  .months { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.6rem; margin-top: 1rem; }
+  .month {
+    display: grid; gap: 0.1rem; text-align: left;
+    padding: 0.75rem 0.8rem; border: 1.5px solid var(--line); border-radius: 14px;
+    background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; min-width: 0;
+  }
+  .month:hover { border-color: var(--ink); }
+  .month[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); background: #fff; }
+  .month-name { display: flex; align-items: center; gap: 0.35rem; font-weight: 600; }
+  .month.is-empty .month-name { color: var(--ink-soft); }
+  .month-pnl { font-weight: 700; overflow-wrap: anywhere; }
+  .month-meta { font-size: 0.8rem; color: var(--ink-soft); }
+  .now { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--signal); }
+
+  /* ---------- Trades table ---------- */
+  .table-wrap { overflow: auto; max-height: 540px; border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+  th {
+    position: sticky; top: 0; z-index: 1; background: #F7F9FA; text-align: left;
+    padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--line);
+    font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); white-space: nowrap;
+  }
+  td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .num { text-align: right; white-space: nowrap; font-weight: 600; }
+  th.num { font-weight: 600; }
+  .nowrap { white-space: nowrap; }
+  .note { margin-top: 0.15rem; max-width: 26ch; font-size: 0.82rem; color: var(--ink-soft); }
+  .chip { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; background: #E6ECF2; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+  .actions { white-space: nowrap; display: flex; gap: 0.9rem; }
+  .empty { padding: 2.2rem 1rem; text-align: center; color: var(--ink-soft); }
+  .empty .btn { margin-top: 1rem; }
+
+  /* ---------- Log form ---------- */
+  .form { display: grid; gap: 0.85rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .seg-control { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border: 1.5px solid var(--line); border-radius: 12px; }
+  .seg-control input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg-control label { display: grid; place-items: center; margin: 0; padding: 0.5rem; border-radius: 9px; font-weight: 600; cursor: pointer; }
+  .seg-control input:checked + label { background: var(--ink); color: #fff; }
+  .seg-control input:focus-visible + label { outline: 3px solid var(--signal); outline-offset: 2px; }
+  .hint { font-size: 0.82rem; color: var(--ink-soft); }
+  .preview { padding: 0.7rem 0.85rem; border-radius: 12px; background: var(--paper); font-size: 0.92rem; color: var(--ink-soft); }
+  .preview.win { background: var(--gain-soft); color: var(--gain); }
+  .preview.loss { background: var(--loss-soft); color: var(--loss); }
+  .form-error { color: var(--loss); font-size: 0.9rem; font-weight: 500; }
+  .form-actions { display: grid; gap: 0.5rem; }
+
+  /* ---------- Sessions ---------- */
+  .sessions { list-style: none; padding: 0; display: grid; gap: 1.1rem; }
+  .sess-head { display: flex; justify-content: space-between; gap: 1rem; font-weight: 600; }
+  .meter { height: 8px; margin-top: 0.4rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .meter span { display: block; height: 100%; border-radius: 999px; background: var(--gain); }
+  .sess-meta { margin-top: 0.3rem; font-size: 0.85rem; color: var(--ink-soft); }
+
+  /* ---------- Data card ---------- */
+  .data-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+  .storage-note { font-size: 0.88rem; color: var(--ink-soft); }
+  .storage-note.warn { color: var(--loss); font-weight: 500; }
+
+  /* ---------- Dialog and toast ---------- */
+  dialog { border: 0; border-radius: 20px; padding: 1.5rem; width: min(92vw, 380px); color: var(--ink); }
+  dialog::backdrop { background: rgba(16, 34, 43, 0.45); }
+  dialog h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+  .toast {
+    position: fixed; left: 50%; bottom: 1.25rem; z-index: 30;
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.7rem 1rem; border-radius: 12px; background: var(--ink); color: #fff;
+    opacity: 0; pointer-events: none; transform: translate(-50%, 16px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  .toast button { background: none; border: 0; color: #A9BAFF; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+  .foot { padding-block: 0 2.5rem; color: var(--ink-soft); font-size: 0.9rem; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .months { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 560px) {
+    :root { --logo-h: 54px; }
+    .months { grid-template-columns: repeat(2, 1fr); }
+    .stat { padding: 0.9rem; }
+    .card { padding: 1.1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+    .curve .line.draw { animation: none; stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="#top" aria-label="Ascent Fx Trading Association, journal home">
+      <img src="data:image/png;base64,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" alt="Ascent Fx Trading Association" width="317" height="282">
+    </a>
+    <div class="top-controls">
+      <label class="sr-only" for="trader">Trader</label>
+      <select id="trader"></select>
+      <button type="button" class="btn btn-ghost" id="add-trader">Add trader</button>
+      <a class="btn btn-primary" href="#log">Log a trade</a>
+    </div>
+  </div>
+</header>
+
+<noscript><p class="wrap" style="padding-block:2rem">This journal needs JavaScript to calculate your stats.</p></noscript>
+
+<main id="top">
+  <div class="wrap page-head">
+    <div>
+      <h1>Trading journal</h1>
+      <p>Log each trade once. Your win rate, R:R, sessions, and monthly P&amp;L update on their own.</p>
+    </div>
+    <div class="years" id="years" role="group" aria-label="Year"></div>
+  </div>
+
+  <div class="wrap layout">
+    <div class="main">
+
+      <!-- Net P&L and equity curve -->
+      <section class="hero-card" aria-labelledby="hero-label">
+        <p class="hero-label" id="hero-label"></p>
+        <p class="hero-value" id="hero-value"></p>
+        <p class="hero-sub" id="hero-sub"></p>
+        <div class="curve" id="curve"></div>
+      </section>
+
+      <!-- Stats -->
+      <section class="stats" id="stats" aria-label="Trading statistics"></section>
+
+      <!-- Monthly P&L -->
+      <section class="card" aria-labelledby="months-h">
+        <div class="card-head">
+          <h2 id="months-h">Monthly P&amp;L</h2>
+          <button type="button" class="link" id="clear-month" hidden>Show whole year</button>
+        </div>
+        <div class="chart" id="month-chart"></div>
+        <div class="months" id="months"></div>
+      </section>
+
+      <!-- Trades -->
+      <section class="card" aria-labelledby="trades-h">
+        <div class="card-head">
+          <h2 id="trades-h">Trades</h2>
+          <span class="muted" id="trade-count"></span>
+        </div>
+        <div class="table-wrap" id="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Symbol</th>
+                <th scope="col">Side</th>
+                <th scope="col">Session</th>
+                <th scope="col" class="num">Risk</th>
+                <th scope="col" class="num">P&amp;L</th>
+                <th scope="col" class="num">R</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty" hidden>
+          <p id="empty-text"></p>
+          <button type="button" class="btn btn-ghost" id="load-sample">Load sample data</button>
+        </div>
+      </section>
+    </div>
+
+    <aside class="aside" aria-label="Log a trade and session breakdown">
+
+      <!-- Log form -->
+      <section class="card" id="log" aria-labelledby="form-h">
+        <div class="card-head"><h2 id="form-h">Log a trade</h2></div>
+        <form class="form" id="trade-form" autocomplete="off">
+          <div class="row">
+            <div class="field">
+              <label for="f-date">Date</label>
+              <input id="f-date" name="date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="f-symbol">Symbol</label>
+              <input id="f-symbol" name="symbol" list="symbols" placeholder="XAUUSD" maxlength="16" required>
+              <datalist id="symbols">
+                <option value="EURUSD"><option value="GBPUSD"><option value="USDJPY">
+                <option value="XAUUSD"><option value="NAS100"><option value="US30">
+                <option value="SPX500"><option value="BTCUSD"><option value="ETHUSD">
+              </datalist>
+            </div>
+          </div>
+
+          <div>
+            <span class="lbl" id="side-lbl">Side</span>
+            <div class="seg-control" role="radiogroup" aria-labelledby="side-lbl">
+              <input type="radio" name="side" id="side-long" value="Long" checked>
+              <label for="side-long">▲ Long</label>
+              <input type="radio" name="side" id="side-short" value="Short">
+              <label for="side-short">▼ Short</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-session">Session</label>
+            <select id="f-session" name="session">
+              <option>Asian</option>
+              <option>London</option>
+              <option selected>New York</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="f-risk">Amount risked</label>
+              <input id="f-risk" name="risk" type="number" inputmode="decimal" min="0.01" step="any" placeholder="100" required>
+            </div>
+            <div class="field">
+              <label for="f-pnl">Result (P&amp;L)</label>
+              <input id="f-pnl" name="pnl" type="number" inputmode="decimal" step="any" placeholder="250 or -100" required>
+            </div>
+          </div>
+          <p class="hint">Use a minus sign for a loss. R is your result divided by the amount risked.</p>
+          <p class="preview" id="preview" aria-live="polite"></p>
+
+          <div class="field">
+            <label for="f-notes">Notes (optional)</label>
+            <textarea id="f-notes" name="notes" maxlength="200" placeholder="What was the setup?"></textarea>
+          </div>
+
+          <p class="form-error" id="form-error" role="alert"></p>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Add trade</button>
+            <button type="button" class="btn btn-ghost btn-block" id="cancel-edit" hidden>Cancel editing</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Sessions -->
+      <section class="card" aria-labelledby="sess-h">
+        <div class="card-head"><h2 id="sess-h">By session</h2></div>
+        <ul class="sessions" id="sessions"></ul>
+      </section>
+
+      <!-- Data -->
+      <section class="card" aria-labelledby="data-h">
+        <div class="card-head"><h2 id="data-h">Your data</h2></div>
+        <p class="storage-note" id="storage-note"></p>
+        <div class="data-actions">
+          <button type="button" class="btn btn-ghost" id="export-csv">Export CSV</button>
+          <button type="button" class="btn btn-ghost" id="backup">Back up</button>
+          <label class="btn btn-ghost" for="restore" style="cursor:pointer">Restore</label>
+          <input class="sr-only" type="file" id="restore" accept="application/json,.json">
+        </div>
+      </section>
+
+    </aside>
+  </div>
+</main>
+
+<p class="wrap foot">The journal opens on the current calendar year. When a new year starts, you get a clean set of months and every earlier year stays available above.</p>
+
+<dialog id="trader-dialog" aria-labelledby="trader-h">
+  <form method="dialog" id="trader-form">
+    <h2 id="trader-h">Add a trader</h2>
+    <div class="field">
+      <label for="trader-name">Name</label>
+      <input id="trader-name" maxlength="40" required>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" id="trader-cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" value="ok">Add trader</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Settings you may want to change ---------- */
+  var CURRENCY = 'USD';
+  var SESSIONS = ['Asian', 'London', 'New York'];
+  var STORE_KEY = 'ledgerline.v1';
+
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var RESERVED = ['__proto__', 'constructor', 'prototype'];
+
+  var now = new Date();
+  var CUR_YEAR = now.getFullYear();
+  var CUR_MONTH = now.getMonth();
+
+  function $(id) { return document.getElementById(id); }
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function round2(n) { return Math.round(n * 100) / 100; }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function todayStr() { return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ---------- Formatting ---------- */
+  var nf = new Intl.NumberFormat(undefined, { style: 'currency', currency: CURRENCY, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function money(n, signed) {
+    if (Math.abs(n) < 0.005) n = 0;
+    var s = nf.format(Math.abs(n));
+    if (signed) return (n > 0 ? '+' : n < 0 ? '\u2212' : '') + s;
+    return (n < 0 ? '\u2212' : '') + s;
+  }
+  function compact(n) {
+    var a = Math.abs(n), s = n > 0 ? '+' : n < 0 ? '\u2212' : '';
+    if (a >= 1e6) return s + (a / 1e6).toFixed(1) + 'M';
+    if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k';
+    return s + Math.round(a);
+  }
+  function fmtR(r) {
+    if (Math.abs(r) < 0.005) r = 0;
+    return (r > 0 ? '+' : r < 0 ? '\u2212' : '') + Math.abs(r).toFixed(2) + 'R';
+  }
+  function fmtDate(d) { return parseInt(d.slice(8, 10), 10) + ' ' + MON[parseInt(d.slice(5, 7), 10) - 1] + ' ' + d.slice(0, 4); }
+  function pct(n) { return Number(n.toFixed(1)) + '%'; }
+
+  /* ---------- Data and storage ---------- */
+  var storageOk = true;
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); } catch (e) { storageOk = false; }
+  var memory = null;
+
+  function normTrade(t) {
+    if (!t || typeof t !== 'object') return null;
+    var date = String(t.date || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    var m = parseInt(date.slice(5, 7), 10);
+    if (m < 1 || m > 12) return null;
+    var risk = parseFloat(t.risk), pnl = parseFloat(t.pnl);
+    if (!(risk > 0) || !isFinite(pnl)) return null;
+    return {
+      id: String(t.id || uid()),
+      ts: Number(t.ts) || Date.now(),
+      date: date,
+      symbol: String(t.symbol || 'N/A').toUpperCase().slice(0, 16),
+      side: t.side === 'Short' ? 'Short' : 'Long',
+      session: SESSIONS.indexOf(t.session) > -1 ? t.session : SESSIONS[SESSIONS.length - 1],
+      risk: risk,
+      pnl: pnl,
+      notes: String(t.notes || '').slice(0, 200)
+    };
+  }
+  function safeName(n) {
+    return typeof n === 'string' && n.trim().length > 0 && n.trim().length <= 40 && RESERVED.indexOf(n.trim()) === -1;
+  }
+  function defaultData() { var d = { active: 'My journal', traders: {} }; d.traders['My journal'] = []; return d; }
+
+  function load() {
+    var d = null;
+    try { var raw = localStorage.getItem(STORE_KEY); if (raw) d = JSON.parse(raw); } catch (e) {}
+    if (!d || typeof d !== 'object' || !d.traders || typeof d.traders !== 'object') d = memory || defaultData();
+    var clean = { active: d.active, traders: {} };
+    Object.keys(d.traders).forEach(function (name) {
+      if (!safeName(name)) return;
+      var arr = Array.isArray(d.traders[name]) ? d.traders[name] : [];
+      clean.traders[name] = arr.map(normTrade).filter(Boolean);
+    });
+    if (!Object.keys(clean.traders).length) clean = defaultData();
+    if (!has(clean.traders, clean.active)) clean.active = Object.keys(clean.traders)[0];
+    return clean;
+  }
+
+  var state = { data: load(), year: CUR_YEAR, month: null, editing: null };
+
+  function save() {
+    memory = state.data;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state.data)); } catch (e) { storageOk = false; }
+    renderStorageNote();
+  }
+  function trades() { return state.data.traders[state.data.active]; }
+  function byDate(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.ts - b.ts; }
+  function yearOf(t) { return parseInt(t.date.slice(0, 4), 10); }
+  function monthOf(t) { return parseInt(t.date.slice(5, 7), 10) - 1; }
+  function scoped() {
+    return trades().filter(function (t) { return yearOf(t) === state.year && (state.month === null || monthOf(t) === state.month); });
+  }
+  function scopeName() { return state.month === null ? String(state.year) : MONTHS[state.month] + ' ' + state.year; }
+
+  /* ---------- Calculations ---------- */
+  function stats(list) {
+    var total = list.length, wins = 0, losses = 0, be = 0, net = 0, gw = 0, gl = 0, winR = 0, lossR = 0, sumR = 0;
+    var keys = {};
+    list.forEach(function (t) {
+      var r = t.pnl / t.risk;
+      net += t.pnl; sumR += r;
+      keys[t.date + '|' + t.session] = 1;
+      if (t.pnl > 0) { wins++; gw += t.pnl; winR += r; }
+      else if (t.pnl < 0) { losses++; gl += -t.pnl; lossR += -r; }
+      else be++;
+    });
+    var avgWinR = wins ? winR / wins : null;
+    var avgLossR = losses ? lossR / losses : null;
+    var sessions = Object.keys(keys).length;
+    return {
+      total: total, wins: wins, losses: losses, be: be, net: net, grossWin: gw, grossLoss: gl,
+      winRate: total ? wins / total * 100 : null,
+      avgWinR: avgWinR, avgLossR: avgLossR,
+      rr: (avgWinR !== null && avgLossR !== null && avgLossR > 0) ? avgWinR / avgLossR : null,
+      avgR: total ? sumR / total : null,
+      sessions: sessions,
+      perSession: sessions ? total / sessions : null
+    };
+  }
+  function monthStats(y) {
+    var buckets = [];
+    for (var i = 0; i < 12; i++) buckets.push([]);
+    trades().forEach(function (t) { if (yearOf(t) === y) buckets[monthOf(t)].push(t); });
+    return buckets.map(stats);
+  }
+  function yearsList() {
+    var set = {}; set[CUR_YEAR] = 1; set[state.year] = 1;
+    trades().forEach(function (t) { set[yearOf(t)] = 1; });
+    return Object.keys(set).map(Number).sort(function (a, b) { return a - b; });
+  }
+
+  /* ---------- Rendering ---------- */
+  var firstCurve = true;
+
+  function renderTrader() {
+    var sel = $('trader');
+    sel.innerHTML = Object.keys(state.data.traders).map(function (n) {
+      return '<option value="' + esc(n) + '"' + (n === state.data.active ? ' selected' : '') + '>' + esc(n) + '</option>';
+    }).join('');
+  }
+
+  function renderYears() {
+    $('years').innerHTML = yearsList().map(function (y) {
+      return '<button type="button" class="year" data-year="' + y + '" aria-pressed="' + (y === state.year) + '">' + y + '</button>';
+    }).join('');
+  }
+
+  function renderHero() {
+    var list = scoped(), s = stats(list);
+    $('hero-label').textContent = 'Net P&L, ' + scopeName();
+    var v = $('hero-value');
+    v.textContent = money(s.net, true);
+    v.className = 'hero-value' + (s.net > 0.004 ? ' gain' : s.net < -0.004 ? ' loss' : '');
+
+    var parts = [s.total + (s.total === 1 ? ' trade' : ' trades')];
+    if (s.avgR !== null) parts.push('expectancy ' + fmtR(s.avgR) + ' per trade');
+    if (state.month === null && s.total) {
+      var ms = monthStats(state.year), best = -1;
+      ms.forEach(function (m, i) { if (m.total && m.net > 0 && (best < 0 || m.net > ms[best].net)) best = i; });
+      if (best >= 0) parts.push('best month ' + MONTHS[best] + ' (' + money(ms[best].net, true) + ')');
+    }
+    $('hero-sub').textContent = s.total ? parts.join(', ') : 'No trades in this period yet.';
+    renderCurve(list);
+  }
+
+  function renderCurve(list) {
+    var el = $('curve');
+    if (!list.length) { el.innerHTML = '<p class="curve-empty">Your equity curve appears here after you log a trade.</p>'; return; }
+    var sorted = list.slice().sort(byDate), pts = [0], c = 0;
+    sorted.forEach(function (t) { c += t.pnl; pts.push(c); });
+    var W = 640, H = 190, padX = 8, padY = 18;
+    var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+    if (min === max) { min -= 1; max += 1; }
+    function X(i) { return padX + i * (W - 2 * padX) / (pts.length - 1); }
+    function Y(v) { return padY + (max - v) / (max - min) * (H - 2 * padY); }
+    var d = '';
+    pts.forEach(function (v, i) { d += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); });
+    var area = d + 'L' + X(pts.length - 1).toFixed(1) + ' ' + H + 'L' + X(0).toFixed(1) + ' ' + H + 'Z';
+    var col = c >= 0 ? 'var(--gain-dark)' : 'var(--loss-dark)';
+    var drawCls = firstCurve ? ' draw' : '';
+    firstCurve = false;
+    el.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" style="color:' + col + '" role="img" aria-label="Equity curve for ' + esc(scopeName()) + ', ending at ' + esc(money(c, true)) + '">' +
+      '<defs><linearGradient id="fillg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity="0.32"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>' +
+      '<path d="' + area + '" fill="url(#fillg)"/>' +
+      '<line class="zero" x1="0" x2="' + W + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '"/>' +
+      '<path class="line' + drawCls + '" pathLength="1" d="' + d + '"/>' +
+      '<circle class="dot" cx="' + X(pts.length - 1).toFixed(1) + '" cy="' + Y(c).toFixed(1) + '" r="6"/>' +
+      '</svg>';
+  }
+
+  function tile(label, value, sub, cls) {
+    return '<div class="stat"><p class="stat-label">' + label + '</p><p class="stat-value ' + (cls || '') + '">' + value + '</p><p class="stat-sub">' + sub + '</p></div>';
+  }
+
+  function renderStats() {
+    var s = stats(scoped());
+    var none = s.total === 0;
+    var html = '';
+    html += tile('Total trades', s.total, none ? 'No trades yet' : (s.be ? s.be + ' breakeven' : 'All logged trades'));
+    html += tile('Wins', s.wins, s.wins ? money(s.grossWin, true) + ' gross' : 'No wins yet', 'gain');
+    html += tile('Losses', s.losses, s.losses ? money(-s.grossLoss, true) + ' gross' : 'No losses yet', 'loss');
+
+    var rate = s.winRate, ring = '';
+    ring = '<svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="ring-track" cx="32" cy="32" r="26"/>' +
+      (rate ? '<circle class="ring-fill" cx="32" cy="32" r="26" pathLength="100" stroke-dasharray="' + rate.toFixed(2) + ' 100" transform="rotate(-90 32 32)"/>' : '') + '</svg>';
+    html += '<div class="stat stat-rate"><div><p class="stat-label">Win rate</p><p class="stat-value">' + (rate === null ? '\u2014' : pct(rate)) +
+      '</p><p class="stat-sub">' + (none ? 'No trades yet' : s.wins + ' of ' + s.total + ' trades') + '</p></div>' + ring + '</div>';
+
+    var rrSub = 'Needs a win and a loss';
+    if (s.rr !== null) rrSub = 'Avg win ' + s.avgWinR.toFixed(2) + 'R, avg loss ' + s.avgLossR.toFixed(2) + 'R';
+    html += tile('Average R:R', s.rr !== null ? '1 : ' + s.rr.toFixed(2) : '\u2014', rrSub);
+    html += tile('Trades per session', s.perSession !== null ? Number(s.perSession.toFixed(1)) : '\u2014',
+      s.sessions ? 'Across ' + s.sessions + (s.sessions === 1 ? ' session' : ' sessions') : 'No sessions yet');
+    $('stats').innerHTML = html;
+  }
+
+  function monthChart(ms) {
+    var W = 720, H = 236, top = 26, bottom = 40, plotH = H - top - bottom;
+    var maxPos = 0, maxNeg = 0;
+    ms.forEach(function (m) { if (m.net > 0) maxPos = Math.max(maxPos, m.net); if (m.net < 0) maxNeg = Math.max(maxNeg, -m.net); });
+    var span = maxPos + maxNeg, scale = span ? plotH / span : 0;
+    var zeroY = span ? top + maxPos * scale : top + plotH / 2;
+    var slot = W / 12, bw = 34;
+    var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Monthly net P&amp;L for ' + state.year + '">';
+    out += '<line class="zero-line" x1="0" x2="' + W + '" y1="' + zeroY.toFixed(1) + '" y2="' + zeroY.toFixed(1) + '"/>';
+    ms.forEach(function (m, i) {
+      var x = i * slot + (slot - bw) / 2;
+      var h = Math.abs(m.net) * scale;
+      if (h < 3) h = 3;
+      var y = m.net >= 0 ? zeroY - h : zeroY;
+      if (m.total === 0 || Math.abs(m.net) < 0.005) y = zeroY - 1.5;
+      var cls = m.total === 0 ? 'bar-empty' : m.net > 0.004 ? 'bar-gain' : m.net < -0.004 ? 'bar-loss' : 'bar-flat';
+      var g = 'bar-g' + (state.month === i ? ' is-selected' : '') + (state.month !== null && state.month !== i ? ' is-dim' : '');
+      out += '<g class="' + g + '" data-month="' + i + '">';
+      out += '<rect class="bar ' + cls + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" rx="6"/>';
+      if (m.total && Math.abs(m.net) >= 0.005) {
+        var ly = m.net >= 0 ? y - 6 : y + h + 14;
+        out += '<text class="bar-val" x="' + (x + bw / 2).toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="middle">' + compact(m.net) + '</text>';
+      }
+      out += '<text class="bar-mon" x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle">' + MON[i] + '</text>';
+      out += '<rect x="' + (i * slot).toFixed(1) + '" y="0" width="' + slot.toFixed(1) + '" height="' + H + '" fill="transparent"/>';
+      out += '</g>';
+    });
+    return out + '</svg>';
+  }
+
+  function renderMonths() {
+    var ms = monthStats(state.year);
+    $('months-h').textContent = 'Monthly P&L, ' + state.year;
+    $('month-chart').innerHTML = monthChart(ms);
+    $('clear-month').hidden = state.month === null;
+    $('months').innerHTML = ms.map(function (m, i) {
+      var cur = state.year === CUR_YEAR && i === CUR_MONTH;
+      var cls = m.net > 0.004 ? 'gain' : m.net < -0.004 ? 'loss' : '';
+      var label = MONTHS[i] + ' ' + state.year + (cur ? ', current month' : '') + ': ' +
+        (m.total ? money(m.net, true) + ', ' + m.total + (m.total === 1 ? ' trade' : ' trades') : 'no trades');
+      return '<button type="button" class="month' + (m.total ? '' : ' is-empty') + '" data-month="' + i + '" aria-pressed="' + (state.month === i) + '" aria-label="' + esc(label) + '">' +
+        '<span class="month-name">' + MON[i] + (cur ? '<span class="now" aria-hidden="true"></span>' : '') + '</span>' +
+        '<span class="month-pnl ' + cls + '">' + (m.total ? money(m.net, true) : '\u2014') + '</span>' +
+        '<span class="month-meta">' + (m.total ? m.total + (m.total === 1 ? ' trade, ' : ' trades, ') + Math.round(m.winRate) + '% wins' : 'No trades') + '</span></button>';
+    }).join('');
+  }
+
+  function renderSessions() {
+    var list = scoped();
+    $('sessions').innerHTML = SESSIONS.map(function (name) {
+      var s = stats(list.filter(function (t) { return t.session === name; }));
+      var wr = s.winRate === null ? 0 : s.winRate;
+      var cls = s.net > 0.004 ? 'gain' : s.net < -0.004 ? 'loss' : '';
+      return '<li><div class="sess-head"><span>' + esc(name) + '</span><span class="' + cls + '">' + (s.total ? money(s.net, true) : '\u2014') + '</span></div>' +
+        '<div class="meter" role="img" aria-label="Win rate ' + Math.round(wr) + ' percent"><span style="width:' + wr.toFixed(1) + '%"></span></div>' +
+        '<p class="sess-meta">' + (s.total ? s.total + (s.total === 1 ? ' trade, ' : ' trades, ') + pct(wr) + ' win rate' : 'No trades') + '</p></li>';
+    }).join('');
+  }
+
+  function renderTable() {
+    var list = scoped().sort(byDate).reverse();
+    $('trade-count').textContent = list.length + (list.length === 1 ? ' trade' : ' trades') + ' in ' + scopeName();
+    if (!list.length) {
+      $('table-wrap').hidden = true;
+      $('empty').hidden = false;
+      var any = trades().length > 0;
+      $('empty-text').textContent = any ? 'No trades in ' + scopeName() + ' yet.' : 'No trades yet. Log your first trade, or load sample data to see how the journal works.';
+      $('load-sample').hidden = any;
+      return;
+    }
+    $('table-wrap').hidden = false;
+    $('empty').hidden = true;
+    $('rows').innerHTML = list.map(function (t) {
+      var r = t.pnl / t.risk, cls = t.pnl > 0 ? 'gain' : t.pnl < 0 ? 'loss' : '';
+      var who = esc(t.symbol) + ' on ' + t.date;
+      return '<tr><td class="nowrap">' + fmtDate(t.date) + '</td>' +
+        '<td><strong>' + esc(t.symbol) + '</strong>' + (t.notes ? '<div class="note">' + esc(t.notes) + '</div>' : '') + '</td>' +
+        '<td><span class="chip">' + (t.side === 'Long' ? '\u25B2 Long' : '\u25BC Short') + '</span></td>' +
+        '<td>' + esc(t.session) + '</td>' +
+        '<td class="num">' + money(t.risk) + '</td>' +
+        '<td class="num ' + cls + '">' + money(t.pnl, true) + '</td>' +
+        '<td class="num ' + cls + '">' + fmtR(r) + '</td>' +
+        '<td><div class="actions"><button type="button" class="link" data-edit="' + esc(t.id) + '" aria-label="Edit trade ' + who + '">Edit</button>' +
+        '<button type="button" class="link danger" data-del="' + esc(t.id) + '" aria-label="Delete trade ' + who + '">Delete</button></div></td></tr>';
+    }).join('');
+  }
+
+  function renderStorageNote() {
+    var n = $('storage-note');
+    if (storageOk) {
+      n.className = 'storage-note';
+      n.textContent = 'Saved in this browser only. Use Back up now and then, and Restore to move your journal to another device.';
+    } else {
+      n.className = 'storage-note warn';
+      n.textContent = 'This view blocks browser storage, so trades will not be saved after you close it. Open the file directly in your browser to keep them, or use Back up.';
+    }
+  }
+
+  function render() {
+    renderTrader(); renderYears(); renderHero(); renderStats();
+    renderMonths(); renderSessions(); renderTable(); renderStorageNote();
+  }
+
+  /* ---------- Toast ---------- */
+  var toastEl = $('toast'), toastTimer;
+  function hideToast() { toastEl.classList.remove('show'); }
+  function toast(msg, actionLabel, action) {
+    toastEl.innerHTML = '';
+    var sp = document.createElement('span');
+    sp.textContent = msg;
+    toastEl.appendChild(sp);
+    if (actionLabel) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = actionLabel;
+      b.addEventListener('click', function () { action(); hideToast(); });
+      toastEl.appendChild(b);
+    }
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 6000);
+  }
+
+  /* ---------- Form ---------- */
+  var form = $('trade-form'), pv = $('preview'), errEl = $('form-error');
+
+  function updatePreview() {
+    var risk = parseFloat(form.elements.risk.value), pnl = parseFloat(form.elements.pnl.value);
+    if (!(risk > 0) || isNaN(pnl)) { pv.className = 'preview'; pv.textContent = 'Enter the amount risked and your P&L to see the R multiple.'; return; }
+    var r = pnl / risk;
+    pv.className = 'preview ' + (pnl > 0 ? 'win' : pnl < 0 ? 'loss' : '');
+    pv.textContent = (pnl > 0 ? 'Win' : pnl < 0 ? 'Loss' : 'Breakeven') + ': ' + fmtR(r);
+  }
+
+  function resetForm(keepContext) {
+    state.editing = null;
+    form.elements.pnl.value = '';
+    form.elements.notes.value = '';
+    if (!keepContext) { form.elements.risk.value = ''; form.elements.symbol.value = ''; form.elements.date.value = todayStr(); }
+    $('form-h').textContent = 'Log a trade';
+    $('submit-btn').textContent = 'Add trade';
+    $('cancel-edit').hidden = true;
+    errEl.textContent = '';
+    updatePreview();
+  }
+
+  function startEdit(id) {
+    var t = trades().filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    state.editing = id;
+    form.elements.date.value = t.date;
+    form.elements.symbol.value = t.symbol;
+    form.elements.side.value = t.side;
+    form.elements.session.value = t.session;
+    form.elements.risk.value = t.risk;
+    form.elements.pnl.value = t.pnl;
+    form.elements.notes.value = t.notes;
+    $('form-h').textContent = 'Edit trade';
+    $('submit-btn').textContent = 'Save changes';
+    $('cancel-edit').hidden = false;
+    errEl.textContent = '';
+    updatePreview();
+    $('log').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form.elements.pnl.focus();
+  }
+
+  form.addEventListener('input', function () { errEl.textContent = ''; updatePreview(); });
+  $('cancel-edit').addEventListener('click', function () { resetForm(false); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var date = form.elements.date.value;
+    var symbol = form.elements.symbol.value.trim().toUpperCase().slice(0, 16);
+    var risk = parseFloat(form.elements.risk.value), pnl = parseFloat(form.elements.pnl.value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { errEl.textContent = 'Pick a date for this trade.'; return; }
+    if (!symbol) { errEl.textContent = 'Enter the symbol you traded.'; return; }
+    if (!(risk > 0)) { errEl.textContent = 'Amount risked must be more than 0.'; return; }
+    if (!isFinite(pnl)) { errEl.textContent = 'Enter your P&L. Use a minus sign for a loss.'; return; }
+
+    var t = {
+      id: state.editing || uid(), ts: Date.now(), date: date, symbol: symbol,
+      side: form.elements.side.value, session: form.elements.session.value,
+      risk: round2(risk), pnl: round2(pnl), notes: form.elements.notes.value.trim().slice(0, 200)
+    };
+    var wasEditing = !!state.editing;
+    if (wasEditing) {
+      var list = trades();
+      for (var i = 0; i < list.length; i++) if (list[i].id === state.editing) { t.ts = list[i].ts; list[i] = t; }
+    } else {
+      trades().push(t);
+    }
+    state.year = yearOf(t);
+    if (state.month !== null && state.month !== monthOf(t)) state.month = null;
+    save();
+    resetForm(true);
+    render();
+    toast(wasEditing ? 'Trade updated.' : 'Trade added.');
+  });
+
+  /* ---------- Interactions ---------- */
+  $('years').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-year]');
+    if (!b) return;
+    state.year = parseInt(b.getAttribute('data-year'), 10);
+    state.month = null;
+    render();
+    var again = $('years').querySelector('[data-year="' + state.year + '"]');
+    if (again) again.focus();
+  });
+
+  function onMonthClick(e) {
+    var el = e.target.closest('[data-month]');
+    if (!el) return;
+    var i = parseInt(el.getAttribute('data-month'), 10);
+    var fromTiles = e.currentTarget === $('months');
+    state.month = state.month === i ? null : i;
+    render();
+    if (fromTiles) { var b = $('months').querySelector('[data-month="' + i + '"]'); if (b) b.focus(); }
+  }
+  $('months').addEventListener('click', onMonthClick);
+  $('month-chart').addEventListener('click', onMonthClick);
+  $('clear-month').addEventListener('click', function () { state.month = null; render(); });
+
+  $('rows').addEventListener('click', function (e) {
+    var ed = e.target.closest('[data-edit]');
+    if (ed) { startEdit(ed.getAttribute('data-edit')); return; }
+    var dl = e.target.closest('[data-del]');
+    if (dl) deleteTrade(dl.getAttribute('data-del'));
+  });
+
+  function deleteTrade(id) {
+    var owner = state.data.active, list = trades(), idx = -1;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) idx = i;
+    if (idx < 0) return;
+    var removed = list.splice(idx, 1)[0];
+    if (state.editing === id) resetForm(false);
+    save(); render();
+    toast('Trade deleted.', 'Undo', function () {
+      state.data.traders[owner].push(removed);
+      save(); render();
+    });
+  }
+
+  /* Traders */
+  $('trader').addEventListener('change', function () {
+    state.data.active = this.value;
+    state.month = null;
+    state.editing = null;
+    save(); resetForm(false); render();
+  });
+
+  var dlg = $('trader-dialog');
+  $('add-trader').addEventListener('click', function () {
+    if (dlg.showModal) { dlg.showModal(); $('trader-name').focus(); }
+  });
+  $('trader-cancel').addEventListener('click', function () { dlg.close('cancel'); });
+  dlg.addEventListener('close', function () {
+    if (dlg.returnValue === 'ok') {
+      var name = $('trader-name').value.trim();
+      if (!safeName(name)) { toast('That name can\u2019t be used. Try another.'); }
+      else {
+        if (!has(state.data.traders, name)) state.data.traders[name] = [];
+        state.data.active = name; state.month = null;
+        save(); resetForm(false); render();
+        toast('Switched to ' + name + '.');
+      }
+    }
+    dlg.returnValue = '';
+    $('trader-name').value = '';
+  });
+
+  /* Sample data */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  $('load-sample').addEventListener('click', function () {
+    var rnd = mulberry32(20260919);
+    var syms = ['EURUSD', 'GBPUSD', 'XAUUSD', 'NAS100', 'USDJPY', 'BTCUSD'];
+    var notes = ['', '', '', 'Followed the plan', 'Late entry', 'Clean breakout', 'Moved stop too early', 'News spike'];
+    var counter = 0;
+    for (var m = 0; m <= CUR_MONTH; m++) {
+      var n = 6 + Math.floor(rnd() * 6);
+      var maxDay = m === CUR_MONTH ? now.getDate() : new Date(CUR_YEAR, m + 1, 0).getDate();
+      for (var i = 0; i < n; i++) {
+        var day = 1 + Math.floor(rnd() * maxDay);
+        var risk = [50, 100, 100, 150][Math.floor(rnd() * 4)];
+        var win = rnd() < 0.54;
+        var r = win ? 1.2 + rnd() * 2.2 : -(0.6 + rnd() * 0.4);
+        var sr = rnd();
+        trades().push({
+          id: uid() + counter, ts: Date.now() + counter++,
+          date: CUR_YEAR + '-' + pad(m + 1) + '-' + pad(day),
+          symbol: syms[Math.floor(rnd() * syms.length)],
+          side: rnd() < 0.5 ? 'Long' : 'Short',
+          session: sr < 0.22 ? 'Asian' : sr < 0.62 ? 'London' : 'New York',
+          risk: risk, pnl: round2(risk * r),
+          notes: notes[Math.floor(rnd() * notes.length)]
+        });
+      }
+    }
+    state.year = CUR_YEAR; state.month = null;
+    save(); render();
+    toast('Sample trades loaded. Delete them any time.');
+  });
+
+  /* Export, backup, restore */
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  function csvText(v) {
+    v = String(v == null ? '' : v);
+    if (/^[=+\-@]/.test(v)) v = "'" + v;
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function slug(s) { return s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'journal'; }
+
+  $('export-csv').addEventListener('click', function () {
+    var rows = ['date,symbol,side,session,risk,pnl,r_multiple,notes'];
+    trades().slice().sort(byDate).forEach(function (t) {
+      rows.push([t.date, csvText(t.symbol), t.side, t.session, t.risk, t.pnl, (t.pnl / t.risk).toFixed(2), csvText(t.notes)].join(','));
+    });
+    download('trades-' + slug(state.data.active) + '.csv', rows.join('\n'), 'text/csv');
+  });
+  $('backup').addEventListener('click', function () {
+    download('ascent-journal-backup-' + todayStr() + '.json', JSON.stringify(state.data, null, 2), 'application/json');
+  });
+  $('restore').addEventListener('change', function () {
+    var file = this.files && this.files[0], input = this;
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var inc = JSON.parse(reader.result), added = 0;
+        if (!inc || typeof inc.traders !== 'object' || !inc.traders) throw new Error('bad file');
+        Object.keys(inc.traders).forEach(function (name) {
+          if (!safeName(name)) return;
+          var arr = Array.isArray(inc.traders[name]) ? inc.traders[name] : [];
+          if (!has(state.data.traders, name)) state.data.traders[name] = [];
+          var dest = state.data.traders[name], ids = {};
+          dest.forEach(function (t) { ids[t.id] = 1; });
+          arr.forEach(function (raw) {
+            var t = normTrade(raw);
+            if (t && !ids[t.id]) { dest.push(t); ids[t.id] = 1; added++; }
+          });
+        });
+        save(); render();
+        toast('Restored ' + added + (added === 1 ? ' trade.' : ' trades.'));
+      } catch (err) {
+        toast('That file isn\u2019t an Ascent Journal backup.');
+      }
+      input.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- Start ---------- */
+  form.elements.date.value = todayStr();
+  updatePreview();
+  render();
+})();
+</script>
+</body>
+</html>
